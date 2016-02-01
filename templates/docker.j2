@@ -1,0 +1,1 @@
+DOCKER_OPTS="-H {{ target }}:2375 --cluster-advertise {{ target }}:2375 --cluster-store consul://{{ consul_ip }}:8500/edgeswarm --label=com.docker.network.driver.overlay.bind_interface=eth0"

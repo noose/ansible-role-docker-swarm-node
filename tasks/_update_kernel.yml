@@ -1,0 +1,17 @@
+---
+- name: update kernel to 3.19+
+  apt: >
+    name="linux-generic-lts-vivid"
+    update_cache=yes
+    cache_valid_time=86400
+  environment:
+    DEBIAN_FRONTEND: "noninteractive"
+  register: update_kernel
+
+- name: turn off intel_rapl autoload
+  lineinfile: >
+    dest="/etc/modprobe.d/blacklist.conf"
+    line="blacklist intel_rapl"
+  notify:
+    - Restart server
+    - Wait for server to restart

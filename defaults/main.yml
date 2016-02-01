@@ -1,0 +1,4 @@
+---
+docker_user: "docker"
+docker_apt_key: "58118E89F3A912897C070ADBF76221572C52609D"
+consul_ip: "10.9.24.186"

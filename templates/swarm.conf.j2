@@ -1,0 +1,3 @@
+# swarm.conf
+start on filesystem
+exec /usr/local/bin/swarm join --addr={{ target }}:2375 consul://{{ consul_ip }}:8500/edgeswarm

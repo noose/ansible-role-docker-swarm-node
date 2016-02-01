@@ -1,0 +1,36 @@
+---
+- name: Restart server
+  command: shutdown -r now "Reboot triggered by Ansible"
+  async: 0
+  poll: 0
+  ignore_errors: true
+
+- name: Wait for server to restart
+  local_action:
+    module: wait_for
+      host={{ inventory_hostname }}
+      port={{ ansible_ssh_port }}
+      delay=1
+      timeout=300
+    sudo: false
+
+- name: Restart docker
+  service: name=docker state=restarted
+
+- name: Start swarm
+  service: name=swarm state=started
+
+- name: Create go path
+  file: path=/opt/goworkspace/ state=directory owner=root group=root mode=777
+
+- name: Reload ufw
+  ufw: state=reloaded
+
+- name: Create docker group
+  group: name=docker
+
+- name: Add user to docker group
+  user: >
+    name="{{ docker_user }}"
+    groups=docker
+    append=yes

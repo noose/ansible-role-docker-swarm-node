@@ -1,0 +1,5 @@
+---
+- hosts: roletest
+  sudo: yes
+  roles:
+    - kubernetes

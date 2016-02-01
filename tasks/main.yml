@@ -1,0 +1,83 @@
+---
+- include: _update_kernel.yml
+
+- name: Install python-pip
+  apt: >
+    name="python-pip"
+    update_cache=yes
+    cache_valid_time=86400
+  environment:
+    DEBIAN_FRONTEND: "noninteractive"
+
+- name: Install docker-py pip package
+  pip: >
+    name="docker-py"
+
+# see official installer script: https://get.docker.com/
+- name: Install apt-key docker
+  apt_key: >
+    keyserver="p80.pool.sks-keyservers.net"
+    id="58118E89F3A912897C070ADBF76221572C52609D"
+
+- name: apt add repository docker
+  apt_repository: repo="deb https://apt.dockerproject.org/repo ubuntu-trusty main"
+
+- name: apt add repository golang
+  apt_repository: repo="ppa:ubuntu-lxc/lxd-stable"
+
+- name: Install git and golang
+  apt: pkg={{ item }} state=installed update_cache=true
+  with_items:
+     - git
+     - golang
+  notify:
+    - Create go path
+
+#- name: Install git
+#  apt: pkg=git state=installed update_cache=true
+
+- name: Install Docker
+  apt: pkg=docker-engine state=installed update_cache=true
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  notify:
+    - Create docker group
+    - Add user to docker group
+
+- name: Install Docker Swarm
+  command: go get github.com/docker/swarm
+  environment:
+    GOPATH: /opt/goworkspace/
+
+- name: Create symlink to swarm
+  file: src=/opt/goworkspace/bin/swarm dest=/usr/local/bin/swarm state=link
+
+- name: Configure docker for swarm
+  template: src=docker.j2 dest=/etc/default/docker
+    owner=root
+    group=root
+    mode=0622
+  notify: Restart docker
+
+- name: Add swarm conf
+  template: src=swarm.conf.j2 dest=/etc/init/swarm.conf	
+    owner=root
+    group=root
+    mode=0644
+
+- name: Add swarm to upstart
+  file: src=/etc/init/swarm.conf dest=/etc/init.d/swarm state=link
+  notify:
+    - Start swarm
+  register: swarmlink
+
+- name: Make swarm start on reboot
+  command: update-rc.d swarm defaults
+  when: swarmlink.changed
+
+- name: Update ufw to allow forwarding
+  lineinfile: >
+    dest="/etc/default/ufw"
+    regexp="DEFAULT_FORWARD_POLICY="
+    line='DEFAULT_FORWARD_POLICY="ACCEPT"'
+  notify: Reload ufw
