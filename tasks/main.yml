@@ -33,9 +33,6 @@
   notify:
     - Create go path
 
-#- name: Install git
-#  apt: pkg=git state=installed update_cache=true
-
 - name: Install Docker
   apt: pkg=docker-engine state=installed update_cache=true
   environment:
